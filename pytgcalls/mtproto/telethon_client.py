@@ -42,6 +42,8 @@ from telethon.tl.types import InputGroupCall
 from telethon.tl.types import InputGroupCallStream
 from telethon.tl.types import InputPeerChannel
 from telethon.tl.types import InputPhoneCall
+from telethon.tl.types import InputPhoneCall
+from telethon.tl.types import InputPeerChannel
 from telethon.tl.types import MessageActionChatDeleteUser
 from telethon.tl.types import MessageActionInviteToGroupCall
 from telethon.tl.types import MessageService
@@ -77,7 +79,6 @@ from ..types import GroupCallParticipant
 from ..types import RawCallUpdate
 from .bridged_client import BridgedClient
 from .client_cache import ClientCache
-
 
 class TelethonClient(BridgedClient):
     def __init__(
@@ -200,15 +201,22 @@ class TelethonClient(BridgedClient):
                         )
                         if result is not None:
                             await self._propagate(p_update)
+            
             if isinstance(
                 update,
                 UpdateGroupCall,
             ):
+                try:
+                    group_entity_id = update.call.chat_id
+                except AttributeError:
+                    return
+                
                 chat_id = self.chat_id(
                     await self._get_entity_group(
-                        update.chat_id,
+                        group_entity_id,
                     ),
                 )
+
                 if isinstance(
                     update.call,
                     GroupCall,
@@ -234,6 +242,7 @@ class TelethonClient(BridgedClient):
                             ChatUpdate.Status.CLOSED_VOICE_CHAT,
                         ),
                     )
+
             if isinstance(
                 update,
                 (
